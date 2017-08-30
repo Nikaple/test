@@ -1,0 +1,53 @@
+$count: 7;
+
+.wrapper {
+  position: relative;
+  margin: 200px;
+  perspective: 800px;
+  perspective-origin: 50% 50%;
+  width: 400px;
+  height: 400px;
+}
+.container {
+  position: relative;
+  width: 400px;
+  height: 400px;
+  background-color: transparentize(#bbb, 0.5);
+  animation: carousel 15s infinite ease-in-out;
+  transform-style: preserve-3d;
+}
+.pic {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 50px;
+  height: 50px;
+}
+
+@for $i from 1 through $count {
+  .pic:nth-child(#{$i}) {
+    $j: ($i - 1) * 360 / $count;
+    background-color: hsl($j, 60%, 50%);
+    // transform: translate(-50%, -50%);
+    transform: translate3d(-50%, -50%, 0) rotateY($j * 1deg) translateZ(150px);
+  }
+}
+
+$static-time: 50%;
+$x: $static-time / $count;
+$move-time: 100% - $static-time;
+$y: $move-time / $count;
+
+@keyframes carousel {
+  @for $i from 0 to $count {
+    $current-frame: $i * ($x + $y);
+    $next-frame: $i * ($x + $y) + $x;
+    $blur: $i * ($x + $y) + $x + $y / 2;
+    #{$current-frame}, #{$next-frame} {
+      transform: rotateY($i * 360deg / $count);
+    }
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}

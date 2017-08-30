@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Throttle & Debounce</title>
+</head>
+<body>
+  <button id="debounce" type="button">debounced click</button>
+  <p id="d_output">Clicked 0 times</p>
+  <button id="throttle" type="button">throttled click</button>
+  <p id="t_output">Clicked 0 times</p>
+  <h1>Throttle & Debounce</h1>
+  <script src="https://cdn.bootcss.com/underscore.js/1.8.3/underscore-min.js"></script>
+  <script>
+    // Throttle, 不管点击多么频繁，只会按照一定频率触发
+    function throttle(fn, wait) {
+      var context = this;
+      var prevTime = Date.now();
+      var remainTime = wait;
+      return function() {
+        var currTime = Date.now();
+        var remainTime = wait - (currTime - prevTime);
+        var args = [].slice.call(arguments);
+        if (remainTime < 0) {
+          fn.apply(context, args);
+          remainTime = wait;
+          prevTime = currTime;
+        }
+      }
+    }
+
+    // Debounce, 在最后一次有效操作之后的一段时间内，操作无效
+    function debounce(fn, threshold) {
+      var context = this;
+      var prevTime = 0;
+      return function () {
+        var args = [].slice.call(arguments);
+        currTime = Date.now();
+        if (currTime - prevTime > threshold) {
+          fn.apply(context, args);
+        }
+        prevTime = currTime;
+      }
+    }
+
+    const $debounce = document.querySelector('#debounce');
+    const $d_output = document.querySelector('#d_output');
+    $debounce.addEventListener('click', debounce((e) => {
+      prevTimes = Number($d_output.textContent.match(/\d+/)[0]);
+      $d_output.textContent = `Clicked ${prevTimes + 1} times`;
+    }, 200));
+    
+    const $throttle = document.querySelector('#throttle');
+    const $t_output = document.querySelector('#t_output');
+    $throttle.addEventListener('click', throttle((e) => {
+      prevTimes = Number($t_output.textContent.match(/\d+/)[0]);
+      $t_output.textContent = `Clicked ${prevTimes + 1} times`;
+    }, 1000));
+  </script>
+</body>
+
+</html>
