@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <!--code here-->
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+  <title>demo</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+    }
+    
+    .head, li div {
+      display: inline-block;
+      width: 70px;
+      text-align: center;
+    }
+
+    li .id, li .sex, .id, .sex {
+      width: 15px;
+    }
+
+    li .name, .name {
+      width: 40px;
+    }
+
+    li .tel, .tel {
+      width: 90px;
+    }
+
+    li .del, .del {
+      width: 15px;
+    }
+
+    ul {
+      list-style: none;
+    }
+
+    .user-delete {
+      cursor: pointer;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div id="J_container">
+    <div class="record-head">
+      <div class="head id">序号</div><div class="head name">姓名</div><div class="head sex">性别</div><div class="head tel">电话号码</div><div class="head province">省份</div><div class="head">操作</div>
+    </div>
+    <ul id="J_List">
+      <li><div class="id">1</div><div class="name">张三</div><div class="sex">男</div><div class="tel">13788888888</div><div class="province">浙江</div><div class="user-delete">删除</div></li>
+      <li><div class="id">2</div><div class="name">李四</div><div class="sex">女</div><div class="tel">13788887777</div><div class="province">四川</div><div class="user-delete">删除</div></li>
+      <li><div class="id">3</div><div class="name">王二</div><div class="sex">男</div><div class="tel">13788889999</div><div class="province">广东</div><div class="user-delete">删除</div></li>
+    </ul>
+  </div>
+
+<script>
+
+const utils = {
+  addHandler(target, event, handler) {
+    if (target.addEventListener) {
+      target.addEventListener(event, handler, false);
+    } else if (target.attachEvent) {
+      target.attachEvent('on' + event, handler);
+    } else {
+      target['on' + event] = handler;
+    }
+  },
+  createNode(type, className, text) {
+    const $node = document.createElement(type);
+    $node.className = className || '';
+    if (text !== undefined) {
+      const $text = document.createTextNode(text);
+      $node.appendChild($text);
+    }
+    return $node;
+  },
+  clearNode(node) {
+    while(node.firstChild) {
+      node.removeChild(node.firstChild);
+    }
+  }
+}
+
+class Contact {
+  constructor(id, name, sex, tel, province) {
+    this.id = id;
+    this.name = name;
+    this.sex = sex;
+    this.tel = tel;
+    this.province = province;
+  }
+}
+
+class ContactList {
+  constructor(selector) {
+    this.root = document.querySelector(selector);
+    this.contacts = [];
+    this.properties = ['id', 'name', 'sex', 'tel', 'province'];
+    this.classNames = ['id', 'name', 'sex', 'tel', 'province'];
+    this.selectors = this.classNames.map(str => '.' + str);
+    this.init();
+  }
+
+  init() {
+    // find all contact nodes
+    const contactNodes = this.selectors.map((selector) => {
+      const [head, ...nodes] = document.querySelectorAll(selector);
+      return nodes;
+    });
+
+    // create all contact instances
+    contactNodes[0].forEach((id, idx) => {
+      const args = [];
+      contactNodes.forEach((node, ind, arr) => {
+        args.push(arr[ind][idx].textContent);
+      });
+      this.contacts.push(new Contact(...args));
+    });
+
+    // bind all events
+    this.bindEvents();
+  }
+
+  render() {
+    // clear root node
+    utils.clearNode(this.root);
+
+    // generate individual contact li node
+    const $nodes = this.contacts.map(contact => {
+      const $li = utils.createNode('li');
+      // append all properties
+      this.classNames.forEach((className, idx) => {
+        const $child = utils.createNode('div', className, contact[this.properties[idx]]);
+        $li.appendChild($child);
+      })
+      // append delete button
+      const $delete = utils.createNode('div', 'user-delete', '删除');
+      $li.appendChild($delete);
+      return $li;
+    });
+
+    // improve performance by fragment
+    const $fragment = document.createDocumentFragment();
+    $nodes.reduce(($fragment, currentNode) => {
+      $fragment.appendChild(currentNode);
+      return $fragment;
+    }, $fragment);
+
+    // finally, append fragment to the root
+    this.root.appendChild($fragment);
+  }
+
+  bindEvents() {
+    const handler = (e) => {
+      if (e.target.className === 'user-delete') {
+        const parent = e.target.parentElement;
+        const currentID = parent.firstChild.textContent;
+        this.contacts = this.contacts
+          .filter(contact => contact.id !== currentID)
+          .map((contact, idx) => {
+            // update contact id
+            contact.id = String(idx + 1);
+            return contact;
+          });
+        this.render();
+      }
+    }
+    utils.addHandler(this.root, 'click', handler);
+  }
+}
+
+const list = new ContactList('#J_List');
+
+</script>
+</body>
+</html>

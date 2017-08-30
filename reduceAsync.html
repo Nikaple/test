@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>reduceAsync</title>
+</head>
+
+<body>
+  <h1>reduceAsync</h1>
+  <script>
+    Array.prototype.reduceAsync = (function () {
+      var index = 0;
+      var result;
+      return function (iteratee, initial, callback) {
+        result = result || initial;
+        var process = function() {
+          result = iteratee(result, this[index], index, this);
+          index++;
+          var handle = requestAnimationFrame(process);
+          if (index >= this.length) {
+            cancelAnimationFrame(handle);
+            callback(result);
+          }
+        }.bind(this);
+        process();
+      }
+    })();
+
+    ['b', 'c', 'd', 'e', 'f', 'g']
+      .reduceAsync((total, curr) => total + curr, 'a', (result) => {
+      console.log(`complete, result = ${result}`);
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>检查JSON中是否有环</title>
+</head>
+
+<body>
+  <script>
+    function assert(expression, errorMsg) {
+      if (expression) {
+        console.log('%cok', 'color: blue');
+      } else {
+        errorMsg ? console.error(errorMsg) : console.trace('我觉得不OK');
+      }
+    }
+    const detectCycle = (function () {
+      const objs = [];
+      return function baseDetect(obj) {
+        for (const prop in obj) {
+          if (typeof obj[prop] === 'object') {
+            if (objs.indexOf(obj[prop]) !== -1) {
+              return true;
+            } else {
+              objs.push(obj[prop]);
+              return baseDetect(obj[prop]);
+            }
+          }
+        }
+        return false;
+      }
+    })();
+
+    const detectCircular = function (obj) {
+      try {
+        JSON.stringify(obj);
+        return false;
+      } catch (e) {
+        return true;
+      }
+    }
+
+    let obj1 = {};
+    assert(detectCircular(obj1) === false, 'object1 should not be circular.');
+
+    let obj2 = {
+      foo: 1,
+      bar: ['b', 'a', 'z'],
+      baz: function () {}
+    };
+    assert(detectCircular(obj2) === false, 'object2 should not be circular.');
+
+    let obj3 = {};
+    obj3.foo = obj3;
+    assert(detectCircular(obj3) === true, 'object3 should be circular.');
+
+    let obj4 = {
+      foo: {
+        bar: null
+      }
+    };
+    obj4.foo.bar = obj4;
+    assert(detectCircular(obj4) === true, 'object4 should be circular.');
+
+    let obj5 = {
+      foo: {
+        bar: {
+          baz: null
+        }
+      }
+    };
+    obj5.foo.bar.baz = obj5.foo;
+    assert(detectCircular(obj5) === true, 'object5 should be circular.');
+
+    let obj6 = {
+      foo: {
+        baz: null
+      },
+      bar: {
+        baz: null
+      }
+    }
+    obj6.foo.baz = obj6.bar;
+    obj6.bar.baz = obj6.foo;
+    assert(detectCircular(obj6) === true, 'object6 should be circular');
+
+    let obj7 = {
+      foo: {
+        bar: 'baz'
+      }
+    };
+    let obj8 = {
+      foo: obj7
+    }
+    obj7.foo.bar = obj8.foo;
+    assert(detectCircular(obj7) === true, 'object7 should be circular.');
+  </script>
+</body>
+
+</html>

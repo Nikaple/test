@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+
+<body>
+  <script>
+    function curry(fn) {
+      var length = fn.length;
+      var slice = Array.prototype.slice;
+      return function () {
+        if (arguments.length < length) {
+          var args = slice.call(arguments);
+          var combined = [fn].concat(args);
+          return curry(baseCurry.apply(this, combined));
+        } else {
+          return fn.apply(this, arguments);
+        }
+      }
+    }
+
+    // baseCurry(fn[, arg1[, arg2, ..., argn]])
+    function baseCurry(fn) {
+      var slice = Array.prototype.slice;
+      var args = slice.call(arguments, 1);
+      return function () {
+        return fn.apply(this, args.concat(slice.call(arguments)));
+      }
+    }
+
+    function add(a, b) {
+      return a + b;
+    }
+
+    const curriedAdd = curry(add);
+    console.log(curriedAdd(1)(2));
+  </script>
+</body>
+
+</html>

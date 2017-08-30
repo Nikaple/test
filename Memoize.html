@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Memoizing</title>
+</head>
+
+<body>
+  <h1>Memoizing</h1>
+  <script>
+    const fibonacci = (function (n) {
+      const cache = {
+        '1': 1,
+        '2': 1
+      };
+      return function fib(n) {
+        if (!(n in cache)) {
+          cache[n] = fib(n - 1) + fib(n - 2);
+        }
+        return cache[n];
+      }
+    })();
+
+    // log(fibonacci(6980));
+
+    const factorial = (function (n) {
+      const cache = {
+        '1': 1
+      };
+      return function fac(n) {
+        if (!(n in cache)) {
+          cache[n] = n * fac(n - 1);
+        }
+        return cache[n];
+      }
+    })();
+
+
+    // function memoize(fn, init) {
+    //   var cache = init || {};
+    //   var context, args, key;
+    //   if (typeof cache !== 'object') {
+    //     throw new TypeError('init param should be object');
+    //   }
+    //   return function() {
+    //     args = [].slice.call(arguments);
+    //     context = this;
+    //     key = args.toString();
+    //     if (!(key in cache)) {
+    //       cache[key] = fn.apply(context, args);
+    //     }
+    //     return cache[key];
+    //   }
+    // }
+
+    /*
+     * memoize.js
+     * by @philogb and @addyosmani
+     * with further optimizations by @mathias
+     * and @DmitryBaranovsk
+     * perf tests: http://bit.ly/q3zpG3
+     * Released under an MIT license.
+     */
+    var memoize = function (fn) {
+      var cache = {};
+      var context = this;
+      return function () {
+        var args = Array.prototype.slice.call(arguments);
+        var hash = args.reduce(function (total, current) {
+          return typeof current === 'object' ?
+            total + JSON.stringify(current) :
+            total + String(current);
+        }, '');
+        console.log(cache, hash);
+        if (!(hash in cache)) {
+          cache[hash] = fn.apply(context, args);
+        }
+        return cache[hash];
+      }
+    };
+
+    var obj = {
+      fac: function (n) {
+        return n === 1 ? 1 : n * this.fac(n - 1);
+      }
+    };
+    obj.mem = memoize(obj.fac);
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+  实现一个LazyMan，可以按照以下方式调用:
+  LazyMan(“Hank”)输出:
+  Hi! This is Hank!
+  
+  LazyMan(“Hank”).sleep(10).eat(“dinner”)输出
+  Hi! This is Hank!
+  //等待10秒..
+  Wake up after 10
+  Eat dinner~
+  
+  LazyMan(“Hank”).eat(“dinner”).eat(“supper”)输出
+  Hi This is Hank!
+  Eat dinner~
+  Eat supper~
+  
+  LazyMan(“Hank”).sleepFirst(5).eat(“supper”)输出
+  //等待5秒
+  Wake up after 5
+  Hi This is Hank!
+  Eat supper
+  
+  以此类推。
+  <script>
+    class Lazyman_{
+      constructor(name) {
+        this.name = name;
+        this._isSleeping = false;
+        this.tasks = [{
+          type: 'greet'
+        }];
+        setTimeout(this.execute.bind(this), 0);
+      }
+
+      // public methods
+      eat(food) {
+        this.tasks.push({
+          type: 'eat',
+          food: food
+        });
+        return this;
+      }
+      sleep(sec) {
+        this.tasks.push({
+          type: 'sleep',
+          time: sec
+        });
+        return this;
+      }
+      sleepFirst(sec) {
+        this.tasks.unshift({
+          type: 'sleep',
+          time: sec
+        });
+        return this;
+      }
+
+      // private methods
+      _greet() {
+        this._say(`Hi This is ${this.name}!`);
+      }
+      _eat(food) {
+        this._say(`Eat ${food}~`);
+      }
+      _sleep(sec) {
+        this._isSleeping = true;
+        setTimeout(() => {
+          this._say(`Wake up after ${sec}`);
+          this._isSleeping = false;
+          this.execute();
+        }, sec * 1000);
+      }
+      _say(words) {
+        console.log(words);
+      }
+
+      // task runner
+      execute() {
+        while(this.tasks.length > 0 && !this._isSleeping) {
+          const curTask = this.tasks.shift();
+          switch(curTask.type) {
+            case 'greet':
+              this._greet();
+              break;
+            case 'eat':
+              this._eat(curTask.food);
+              break;
+            case 'sleep':
+              this._sleep(curTask.time);
+              break;
+            default:
+              throw new Error('Unknown task!')
+          }
+        }
+      }
+    }
+
+    function LazyMan(name) {
+      return new Lazyman_(name);
+    }
+
+    LazyMan('Hank').sleepFirst(1).eat('supper').sleep(2).eat('dinner');
+  </script>
+</body>
+</html>

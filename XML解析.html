@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>验证 XML 的合法性</title>
+</head>
+<body>
+  <h1>验证 XML 的合法性</h1>
+  <script>
+    // 验证 XML 的合法性
+    function checkXML(xml) {
+      xml = removeComment(xml);
+      var regex = /<\/?(\w+)>/g;
+      var elements = xml.match(regex);
+      if (!elements) {
+        return 'Invalid';
+      }
+      var nodes = elements.map(element => {
+        var type = element[1] === '/' ? 'end' : 'start';
+        var name = element.match(/\w+/)[0];
+        return {
+          type: type,
+          name: name
+        }
+      });
+      var stack = [];
+      nodes.forEach(node => {
+        var last = stack[stack.length - 1];
+        if (node.type === 'end' && last.type === 'start' && node.name === last.name) {
+          stack.pop();
+        } else {
+          stack.push(node);
+        }
+      });
+      if (stack.length === 0) {
+        return 'Valid';
+      } else {
+        return 'Invalid';
+      }
+    }
+
+    function removeComment(xml) {
+      return xml.replace(/<!--[\s\S]+-->/g, '');
+    }
+    
+  </script>
+</body>
+</html>

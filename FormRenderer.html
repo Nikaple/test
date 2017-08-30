@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <!--code here-->
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+  <title>demo</title>
+  <style>
+
+  </style>
+</head>
+
+<body>
+  <table id="table">
+  </table>
+  <script>
+    const columns = [{
+        text: 'Name',
+        key: 'name'
+      },
+      {
+        text: 'Age',
+        key: 'age'
+      },
+      {
+        text: 'Gender',
+        key: 'gender'
+      }
+    ];
+
+    const data = [{
+        name: 'Tom',
+        age: 5,
+        gender: 1
+      },
+      {
+        name: 'Jerry',
+        age: 2,
+        gender: 0
+      },
+    ];
+
+    class FormRenderer {
+      constructor(selector, columns, data, fn) {
+        this.$table = document.querySelector(selector);
+        this.head = columns;
+        this.data = data;
+        this.transform(fn);
+        this.init();
+      }
+
+      init() {
+        this.headKey = this.head.map(obj => obj.key);
+        this.renderAll();
+      }
+
+      renderTh() {
+        const $container = document.createElement('tr');
+        this.head.forEach(head => {
+          const $th = document.createElement('th');
+          const $text = document.createTextNode(head.text);
+          $th.appendChild($text);
+          $container.appendChild($th);
+        });
+        return $container;
+      }
+
+      renderTd() {
+        const $body = [];
+        this.data.forEach(data => {
+          const $container = document.createElement('tr');
+          this.headKey.forEach(key => {
+            for (const prop in data) {
+              if (prop === key) {
+                const $td = document.createElement('td');
+                const $text = document.createTextNode(data[prop]);
+                $td.appendChild($text);
+                $container.appendChild($td);
+                $body.push($container);
+                break;
+              }
+            }
+          })
+        });
+        return $body;
+      }
+
+      renderAll() {
+        const $container = document.createDocumentFragment();
+        const $head = this.renderTh();
+        const $body = this.renderTd();
+        $container.appendChild($head);
+        $body.forEach($row => {
+          $container.appendChild($row);
+        });
+        this.$table.appendChild($container);
+      }
+
+      transform(fn) {
+        this.data.forEach(fn);
+      }
+    }
+
+    const transformer = function (obj) {
+      if (obj.gender === 0) {
+        obj.gender = 'Female';
+      } else {
+        obj.gender = 'Male';
+      }
+    }
+    const renderer = new FormRenderer('#table', columns, data, transformer);
+
+
+</script>
+</body>
+
+</html>

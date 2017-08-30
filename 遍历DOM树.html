@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="root">
+    <ul>
+      <li>
+        <p class="start"></p>
+        <p></p>
+      </li>
+      <li>
+        <p></p>
+        <p></p>
+      </li>
+      <li>
+        <p></p>
+        <p></p>
+      </li>
+      <li>
+        <p></p>
+        <p></p>
+      </li>
+      <li>
+        <p></p>
+        <p></p>
+      </li>
+    </ul>
+    <ul>
+      <li>
+        <p></p>
+        <p></p>
+      </li>
+      <li>
+        <p></p>
+        <p></p>
+      </li>
+      <li>
+        <p></p>
+        <p></p>
+      </li>
+      <li>
+        <p></p>
+        <p></p>
+      </li>
+      <li>
+        <p></p>
+        <p></p>
+      </li>
+    </ul>
+    <ul>
+      <li>
+        <p></p>
+        <p></p>
+      </li>
+      <li>
+        <p></p>
+        <p class="end"></p>
+      </li>
+    </ul>
+  </div>
+  <script>
+    const traverse1 = function(root){
+      const nodeList = [];
+      baseTraverse(root, nodeList);
+      return nodeList;
+    };
+
+    function baseTraverse(node, nodeList) {
+      nodeList.push(node);
+      if (!node.children) {
+        return;
+      }
+      for (let i = 0; i < node.children.length; i++) {
+        baseTraverse(node.children[i], nodeList);
+      }
+      return nodeList;
+    }
+
+    const traverse2 = function(root) {
+      const iterator = document.createNodeIterator(root, NodeFilter.SHOW_ELEMENT);
+      const nodeList = [];
+      let next = iterator.nextNode();
+      while (next) {
+        nodeList.push(next);
+        next = iterator.nextNode();
+      }
+      return nodeList;
+    }
+
+    const traverse3 = function(root) {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+      const nodeList = [root];
+      let next = walker.nextNode();
+      while (next) {
+        nodeList.push(next);
+        next = walker.nextNode();
+      }
+      return nodeList;
+    }
+
+    const root = document.querySelector('#root');
+    console.log(traverse1(root));
+    console.log(traverse2(root));
+    console.log(traverse3(root));
+  </script>
+</body>
+
+</html>
