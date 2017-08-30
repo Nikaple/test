@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>jsonp</title>
+</head>
+
+<body>
+  <h1>JSONP example. Open console.</h1>
+  <script>
+    const ajax = function (options) {
+      const {
+        url,
+        dataType,
+        success,
+        error,
+        timeout,
+      } = options;
+      switch (dataType) {
+        case 'jsonp':
+          private.jsonp(url, success, timeout, error);
+          break;
+        default:
+          throw new Error('Unknown type');
+      }
+      return {
+        cancel: private.cancel.bind(private)
+      }
+    }
+
+    const private = {
+      jsonp(url, success, timeout, error) {
+        const jsonpId = this.getJsonpId();
+        this.jsonpId = jsonpId;
+        const urlWithCallback = this.addCallback(url, jsonpId);
+
+        // define random named callback
+        window[jsonpId] = (data) => {
+          success(data);
+          console.log('success');
+          this.clearJsonp(jsonpId);
+        }
+        // alias
+        const cb = window[jsonpId];
+
+        // create node and fire request
+        const $script = document.createElement('script');
+        $script.src = urlWithCallback;
+        document.body.appendChild($script);
+
+        // bind properties to callback function
+        cb.scriptNode = $script;
+        cb.timeoutId = setTimeout(() => {
+          error(new Error('timeout!'));
+          console.log('error');
+          this.clearJsonp(jsonpId);
+        }, timeout);
+      },
+
+      clearJsonp(jsonpId) {
+        cb = window[jsonpId];
+        clearTimeout(cb.timeoutId);
+        if (cb.scriptNode) {
+          document.body.removeChild(cb.scriptNode);
+          cb.scriptNode = null;
+        }
+        window[jsonpId] = function () {
+          delete window[jsonpId];
+        };
+      },
+
+      getJsonpId() {
+        return 'jsonp' + String(Math.random()).substr(2, 10);
+      },
+
+      addCallback(url, jsonpId) {
+        const hasSearch = url.indexOf('?') > -1;
+        const connector = hasSearch ? '&' : '?';
+        return `${url}${connector}callback=${jsonpId}`;
+      },
+
+      cancel() {
+        this.clearJsonp(this.jsonpId);
+        console.log('request cancelled!');
+      }
+    }
+
+    // this should timeout !
+    ajax({
+      url: 'https://api.github.com/users/nikaple',
+      dataType: 'jsonp',
+      success: function (data) {
+        console.log(data.meta);
+      },
+      timeout: 100,
+      error: function (err) {
+        console.error(err);
+      }
+    });
+
+    // this should be cancelled !
+    const request = ajax({
+      url: 'https://api.github.com/users/nikaple',
+      dataType: 'jsonp',
+      success: function (data) {
+        console.log(data.meta);
+      },
+      timeout: 5000,
+      error: function (err) {
+        console.error(err);
+      }
+    });
+    setTimeout(function(){
+      request.cancel();
+    }, 300);
+
+    // this should success!
+    ajax({
+      url: 'https://api.github.com/users/nikaple',
+      dataType: 'jsonp',
+      success: function (data) {
+        console.log(data.meta);
+      },
+      timeout: 5000,
+      error: function (err) {
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+
+</html>
