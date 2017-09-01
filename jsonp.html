@@ -47,12 +47,11 @@
         const cb = window[jsonpId];
 
         // create node and fire request
-        const $script = document.createElement('script');
-        $script.src = urlWithCallback;
-        document.body.appendChild($script);
+        cb.scriptNode = document.createElement('script');
+        cb.scriptNode.src = urlWithCallback;
+        document.body.appendChild(cb.scriptNode);
 
         // bind properties to callback function
-        cb.scriptNode = $script;
         cb.timeoutId = setTimeout(() => {
           error(new Error('timeout!'));
           console.log('error');
@@ -113,7 +112,7 @@
         console.error(err);
       }
     });
-    setTimeout(function(){
+    setTimeout(function () {
       request.cancel();
     }, 300);
 

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+
+<body>
+  <canvas width="800" height="800"></canvas>
+  <script>
+    const DIRECTION = {
+      TOP: 0,
+      RIGHT: 1,
+      BOTTOM: 2,
+      LEFT: 3
+    }
+
+    class Painter {
+      constructor() {
+        this.canvas = document.querySelector('canvas')
+        this.ctx = this.canvas.getContext('2d')
+        this.width = this.canvas.width
+        this.height = this.canvas.height
+      }
+
+      // clear with background color
+      clear(bgColor) {
+        this.fill(bgColor || 'white')
+        this.rect(0, 0, this.width, this.height)
+      }
+
+      // set fillsStyle
+      fill(style) {
+        this.ctx.fillStyle = style
+      }
+
+      // set strokeStyle
+      stroke(style) {
+        this.ctx.strokeStyle = style
+      }
+
+      // set lineWidth
+      strokeWeight(weight) {
+        this.ctx.lineWidth = weight
+      }
+
+      // draw rectangle
+      rect(x, y, w, h) {
+        this.ctx.fillRect(x, y, w, h)
+      }
+
+      // draw line
+      line(x1, y1, x2, y2) {
+        this.ctx.beginPath()
+        this.ctx.moveTo(x1, y1)
+        this.ctx.lineTo(x2, y2)
+        this.ctx.stroke()
+        this.ctx.closePath()
+      }
+
+      // get unique instance of painter
+      static get instance() {
+        if (!Painter.painter) {
+          Painter.painter = new Painter()
+        }
+        return Painter.painter
+      }
+    }
+
+    class Cell {
+      constructor(options) {
+        const {
+          x,
+          y,
+          id,
+          grid,
+          fill,
+          activeFill,
+          currentFill,
+          stroke
+        } = options
+        this.xx = x
+        this.yy = y
+        this.x = x * grid // x position
+        this.y = y * grid // y position
+        this.id = id // id number
+        this.grid = grid // grid size
+        this.activeFillStyle = activeFill || 'purple' // color when visited
+        this.currentFillStyle = currentFill || '#333' // color when this is the current head cell
+        this.fillStyle = fill || 'lightblue' // inner color
+        this.strokeStyle = stroke // outer color
+        this.visited = false // visited or not
+        this.isCurrent = false // is current generating cell or not 
+
+        this.walls = [true, true, true, true] // top, right, bottom, left lines
+        this.neighbors = []
+        this.edgePositions = [
+          [this.x, this.y, this.x + this.grid, this.y], // top
+          [this.x + this.grid, this.y, this.x + this.grid, this.y + this.grid], // right
+          [this.x + this.grid, this.y + this.grid, this.x, this.y + this.grid], // bottom
+          [this.x, this.y, this.x, this.y + this.grid] // left
+        ]
+
+        this.painter = Painter.instance
+      }
+
+      // has available neighbors around the cell ?
+      hasAvailableNeighbors() {
+        return this.neighbors.some(neighbor => neighbor && neighbor.visited === false)
+      }
+
+      // visit the neighbor in the given direction
+      removeWall() {
+        const neighbor = this.neighbors[this.direction]
+        this.walls[this.direction] = false
+        neighbor.walls[this._reverseDirection(this.direction)] = false
+      }
+
+      // randomly choose a neighbor which is not visited
+      chooseNeighbor() {
+        const availableNeighbors = this.neighbors.filter(neighbor => neighbor.visited === false)
+        const randomIndex = Math.floor((availableNeighbors.length) * Math.random())
+        const chosenNeighbor = availableNeighbors[randomIndex]
+        // store the current direction
+        this.direction = this.neighbors.indexOf(chosenNeighbor)
+        return chosenNeighbor
+      }
+
+      // fill cell
+      fill() {
+        const p = this.painter
+        const fillStyle = this.isCurrent ?
+          this.currentFillStyle :
+          this.visited ?
+          this.activeFillStyle :
+          this.fillStyle
+        p.fill(fillStyle)
+        p.rect(this.x, this.y, this.grid, this.grid)
+      }
+
+      // stroke cell
+      stroke() {
+        const p = this.painter
+        p.stroke(this.strokeStyle)
+        this.walls.forEach((edge, idx) => {
+          edge && p.line(...this.edgePositions[idx])
+        })
+      }
+
+      // fill & stroke cell
+      draw() {
+        this.fill()
+        this.stroke()
+      }
+
+      _reverseDirection(direction) {
+        switch (direction) {
+          case DIRECTION.TOP:
+            return DIRECTION.BOTTOM
+            break;
+          case DIRECTION.RIGHT:
+            return DIRECTION.LEFT
+            break;
+          case DIRECTION.BOTTOM:
+            return DIRECTION.TOP
+            break;
+          case DIRECTION.LEFT:
+            return DIRECTION.RIGHT
+            break;
+          default:
+            throw Error('Not a valid direction')
+        }
+      }
+    }
+
+    class Maze {
+      constructor(options) {
+        const {
+          cols,
+          rows,
+          grid,
+          head,
+          offset
+        } = options
+        this.cols = cols // number of cols
+        this.rows = rows // number of rows
+        this.grid = grid // grid side
+        this.head = head || 0 // start position
+        this.offset = offset || [0, 0] // offset x and y
+        this.cells = Array(cols * rows).fill(0) // cell array
+        this.stack = []
+        this.visited = []
+        this.moveSteps = {
+          [DIRECTION.TOP]: -this.cols,
+          [DIRECTION.RIGHT]: 1,
+          [DIRECTION.BOTTOM]: this.cols,
+          [DIRECTION.LEFT]: -1
+        }
+        this.init()
+      }
+
+      // fill cell array with cell instance
+      init() {
+        this.cells = this.cells.map((cell, idx) => {
+          const [x, y] = this.getPosition(idx)
+          return new Cell({
+            x: x + this.offset[0],
+            y: y + this.offset[1],
+            id: idx,
+            grid: this.grid,
+            fill: 'lightblue',
+            activeFill: 'purple',
+            currentFill: 'black',
+            stroke: 'white'
+          })
+        })
+
+        this.markNeighbors()
+        // make the initial cell the current cell and mark it as visited
+        this.currentCell = this.cells[this.head]
+        this.currentCell.visited = true
+        this.currentCell.isCurrent = true
+        this.visited.push(this.currentCell)
+      }
+
+      // mark the borders with no corresponding neighbour
+      markNeighbors() {
+        this.cells.forEach((cell, idx) => {
+          const top = idx < this.cols ?
+            null :
+            idx - this.cols
+          const right = idx % this.cols === this.cols - 1 ?
+            null :
+            idx + 1
+          const bottom = idx > this.cells.length - this.cols - 1 ?
+            null :
+            idx + this.cols
+          const left = idx % this.cols === 0 ?
+            null :
+            idx - 1;
+          [top, right, bottom, left].forEach((num, index) => {
+            num && (cell.neighbors[index] = this.cells[num])
+          })
+        })
+      }
+
+      // find position by array index
+      getPosition(index) {
+        const row = index % this.cols
+        const col = (index - row) / this.cols
+        return [row, col]
+      }
+
+      // move the head randomly by 1 unit
+      move() {
+        // while there are unvisited cells
+        this.currentCell.isCurrent = false
+        if (this.visited.length !== this.cells.length) {
+          // if the current cell has any neighbours which have not been visited
+          if (this.currentCell.hasAvailableNeighbors()) {
+            // choose randomly one of the unvisited neighbours
+            const chosenCell = this.currentCell.chooseNeighbor()
+            // push the current cell to the stack
+            this.stack.push(this.currentCell)
+            // remove the wall between the current cell and the chosen cell
+            this.currentCell.removeWall()
+            // make the chosen cell the current cell and mark it as visited
+            this.currentCell = chosenCell
+            this.currentCell.isCurrent = true
+            chosenCell.visited = true
+            this.visited.push(chosenCell)
+          } else if (this.stack.length !== 0) {
+            // pop a cell from the stack and make it the current cell
+            this.currentCell = this.stack.pop()
+            this.currentCell.isCurrent = true
+          }
+        }
+      }
+
+      // draw the maze
+      draw() {
+        this.cells.forEach(cell => cell.draw())
+      }
+    }
+
+    function draw(painter, maze) {
+      painter.clear('lightgray')
+      maze.draw()
+      maze.move()
+      requestAnimationFrame(() => {
+        draw(painter, maze)
+      })
+    }
+    
+    function main() {
+      const painter = Painter.instance
+      const maze = new Maze({
+        cols: 80,
+        rows: 80,
+        grid: 10,
+        // offset: [1, 1]
+      })
+      // maze.move()
+      window.maze = maze
+      draw(painter, maze)
+    }
+
+    main()
+
+  </script>
+</body>
+
+</html>

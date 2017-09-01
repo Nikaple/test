@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+
+<body>
+  <script>
+    function* gen() {
+      const userUrl = `http://catappapi.herokuapp.com/users/123`
+      const catUrl = `http://catappapi.herokuapp.com/cats/`
+      const response = yield fetch(userUrl)
+      const user = yield response.json()
+      const cats = user.cats
+      const catImageUrls = []
+      for (const catId of cats) {
+        const catResponse = yield fetch(`${catUrl}${catId}`)
+        const cat = yield catResponse.json()
+        const imageUrl = cat.imageUrl
+        catImageUrls.push(imageUrl)
+      }
+      return catImageUrls
+    }
+
+    function run(generator) {
+      function iterate(iteration) {
+        if (iteration.done) return iteration.value;
+        return iteration.value.then(val => iterate(iterator.next(val)))
+      }
+
+      const iterator = generator()
+      return iterate(iterator.next())
+    }
+
+    run(gen)
+      .then(urls => urls.forEach(showUrl))
+
+    /* Promise start
+
+    function fetchUser(userName) {
+      return fetch(`http://catappapi.herokuapp.com/users/${userName}`)
+        .then(response => response.json())
+        .then(data => data.cats.map(cat => fetchCats(cat)))
+    }
+
+    function fetchCats(cat) {
+      return fetch(`http://catappapi.herokuapp.com/cats/${cat}`)
+        .then(response => response.json())
+        .then(data => {
+          return data.imageUrl
+        });
+    }
+    fetchUser('123')
+      .then(data => data.map(promise => promise.then(url => showUrl(url))))
+
+    Promise end */
+
+    /* Async & await start
+
+    async function fetchUrl(userName) {
+      const response = await fetch(`http://catappapi.herokuapp.com/users/${userName}`)
+      const user = await response.json()
+      const catImageUrls = []
+      for (const catId of user.cats) {
+        const response = await fetch(`http://catappapi.herokuapp.com/cats/${catId}`)
+        const catData = await response.json()
+        catImageUrls.push(catData.imageUrl)
+      }
+      return catImageUrls
+    }
+
+    fetchUrl('123').then(url => {
+      showUrl(url)
+    })
+
+     Async & await end */
+
+    function showUrl(url) {
+      const h1 = document.createElement('h1')
+      h1.innerText = url
+      document.body.appendChild(h1)
+    }
+  </script>
+</body>
+
+</html>
