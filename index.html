@@ -369,7 +369,6 @@
     function draw(painter, maze) {
       painter.clear('lightgray')
       maze.draw()
-      // maze.generate()
       maze.update()
       requestAnimationFrame(() => {
         draw(painter, maze)
@@ -382,11 +381,9 @@
         cols: 25,
         rows: 25,
         grid: 16,
-        // offset: [1, 1]
       })
       maze.generate()
       maze.resolve(0, ~~(Math.random() * maze.cols * maze.rows))
-      window.maze = maze
       draw(painter, maze)
     }
 
